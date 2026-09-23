@@ -1,14 +1,4 @@
-# HTTP 與 API
+# Vercel Serverless Function Dependencies
 requests>=2.31.0
-
-# 資料處理與分析
 pandas>=2.0.0
-tabulate>=0.9.0
-
-# 環境變數管理
 python-dotenv>=1.0.0
-
-# 網頁應用與視覺化 (後續階段使用)
-streamlit>=1.28.0
-folium>=0.15.0
-streamlit-folium>=0.17.0

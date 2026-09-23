@@ -53,23 +53,23 @@ flowchart TD
   - 安裝必要套件：`requests`, `pandas`, `streamlit`, `folium`, `streamlit-folium`。
 - [x] **步驟 2：中央氣象署 CWA 平台註冊**
   - 前往 CWA 開放資料平台註冊會員，取得個人 `Authorization` API Key。
-- [ ] **步驟 3：使用 Requests 抓取氣象資料**
+- [x] **步驟 3：使用 Requests 抓取氣象資料**
   - 撰寫 `fetch_cwa_data.py`，發送 HTTP GET 請求取得未來一週全台分區天氣預報 JSON 資料。
 
 ---
 
 ### 階段二：資料清洗與 SQLite 資料庫建構
-- [ ] **步驟 4：解析 JSON 階層結構**
+- [x] **步驟 4：解析 JSON 階層結構**
   - 探索 JSON 內的 `records` ➔ `locations` ➔ `location` ➔ `weatherElement` 結構。
-- [ ] **步驟 5：提取最高溫 (MaxT) 與最低溫 (MinT)**
+- [x] **步驟 5：提取最高溫 (MaxT) 與最低溫 (MinT)**
   - 解析時間戳記、地區名稱與高低溫數值。
-- [ ] **步驟 6：Pandas 整理結構化資料**
+- [x] **步驟 6：Pandas 整理結構化資料**
   - 轉為 Pandas DataFrame，統一欄位命名與型態轉換。
-- [ ] **步驟 7：建立 SQLite 資料表 `TemperatureForecasts`**
+- [x] **步驟 7：建立 SQLite 資料表 `TemperatureForecasts`**
   - 定義欄位：`id`, `regionName`, `dataDate`, `minT`, `maxT`。
-- [ ] **步驟 8：資料寫入與防重複機制**
+- [x] **步驟 8：資料寫入與防重複機制**
   - 實作寫入邏輯，重複執行時進行覆蓋或略過，保持資料乾淨。
-- [ ] **步驟 9：SQL 查詢驗證**
+- [x] **步驟 9：SQL 查詢驗證**
   - 執行 `SELECT DISTINCT regionName` 與條件查詢檢視資料。
 
 ---

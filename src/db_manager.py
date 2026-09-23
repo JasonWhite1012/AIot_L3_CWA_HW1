@@ -144,7 +144,7 @@ def get_all_latest_forecasts(db_path: str = DEFAULT_DB_PATH) -> pd.DataFrame:
     init_db(db_path)
     conn = get_db_connection(db_path)
     query_sql = """
-    SELECT regionName, startTime, endTime, weather, minT, maxT, avgT, pop, comfort
+    SELECT id, regionName, startTime, endTime, weather, minT, maxT, avgT, pop, comfort
     FROM TemperatureForecasts
     ORDER BY startTime ASC, regionName ASC;
     """

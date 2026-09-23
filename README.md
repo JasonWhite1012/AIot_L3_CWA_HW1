@@ -135,35 +135,61 @@ pip install -r requirements.txt
 1. 前往 [中央氣象署開放資料平台 (CWA Open Data)](https://opendata.cwa.gov.tw/) 註冊會員並申請授權碼（API Key）。
 2. 在程式或環境變數中設定您的 `CWA_API_KEY`。
 
-### 4. 執行爬蟲與資料入庫
+### 4. 本地啟動測試 (Local Dev)
 
+本專案支援 **Vercel 極速現代 Web 架構**：
 ```bash
-# 擷取氣象局資料並寫入 SQLite 資料庫 (data.db)
-python fetch_cwa_data.py
+# 啟動本地開發伺服器 (包含 API 與靜態極光前端)
+python dev_server.py
 ```
+啟動後開啟瀏覽器訪問：`http://localhost:3000`。
 
-### 5. 啟動 Streamlit 儀表板
+> 若想使用原版 Streamlit 亦可執行：
+> `python -m streamlit run app.py` (訪問 `http://localhost:8501`)
 
-```bash
-streamlit run app.py
-```
-啟動後，瀏覽器將自動開啟 `http://localhost:8501`。
+---
+
+## ☁️ 一鍵部署至 Vercel (Deploy to Vercel)
+
+本專案已完全適配 Vercel Serverless 架構，部署只需 3 步驟：
+
+1. **推送程式碼至 GitHub**：
+   ```bash
+   git add .
+   git commit -m "feat: deploy to vercel with serverless architecture"
+   git push origin main
+   ```
+2. **在 Vercel 匯入專案**：
+   - 登入 [Vercel 官網](https://vercel.com/)，點選 **「Add New...」 $\rightarrow$ 「Project」**。
+   - 選擇並匯入您的 GitHub 專案 `AIot_L3_CWA_HW1`。
+3. **設定環境變數 (Environment Variables)**：
+   - 在專案設定中加入：
+     - **Key**：`CWA_API_KEY`
+     - **Value**：`<您的中央氣象署授權碼>`
+   - 點選 **「Deploy」**，約 30 秒即可取得全球 CDN 專屬網址！
 
 ---
 
 ## 📂 專案檔案結構 (Project Structure)
 
 ```plaintext
-AIot_L3_CWA_HW1/
+L2-CWA/
 │
-├── data/
-│   └── data.db                 # SQLite 氣候歷史與預報資料庫
+├── api/
+│   └── weather.py              # Vercel Serverless API (提供全台氣象 JSON)
+├── public/                     # 靜態前端資源 (極速 60fps 體驗)
+│   ├── index.html              # 巴哈暗黑極光版 Web 首頁
+│   ├── style.css               # 毛玻璃與霓虹電競 CSS 樣式
+│   ├── app.js                  # Leaflet 地圖與 Chart.js 雙軸圖表邏輯
+│   └── assets/
+│       └── aurora.jpg          # 北極極光高解析背景圖
 ├── src/
-│   ├── fetch_cwa_data.py       # 氣象局 API 資料爬取與 ETL 處理
-│   ├── db_manager.py           # SQLite 連線、建表與查詢邏輯
-│   └── map_visualizer.py       # Folium 台灣地圖繪製與溫階色標邏輯
-├── app.py                      # Streamlit 前端儀表板主入口
-├── requirements.txt            # 相依套件清單
+│   ├── fetch_cwa_data.py       # CWA 氣象資料爬取與 ETL 解析模組
+│   ├── db_manager.py           # SQLite 連線與防重複入庫邏輯
+│   └── map_visualizer.py       # Folium 台灣地圖繪製模組
+├── dev_server.py               # 本地 Vercel 模擬開發伺服器
+├── vercel.json                 # Vercel 雲端路由設定檔
+├── requirements.txt            # Python 相依套件清單
 └── README.md                   # 專案說明文件
 ```
 

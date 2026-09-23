@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taiwan Weather Forecast | 台灣即時天氣與降雨預報 (巴哈姆特暗黑極光版)</title>
+    <meta name="description" content="串接中央氣象署 Open Data API，提供全台灣 22 縣市即時氣溫趨勢、降雨機率預警與互動式空間地圖儀表板。">
+
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet.js CSS (互動地圖) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- 主樣式表 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 頂部氛圍極光背景覆蓋層 -->
+    <div class="aurora-ambient-glow"></div>
+
+    <div class="app-container">
+        <!-- 頂部 Header 與導航控制區 -->
+        <header class="app-header">
+            <div class="header-branding">
+                <div class="brand-badge">
+                    <span class="pulse-dot"></span>
+                    <span>AURORA EDITION</span>
+                </div>
+                <h1 class="main-title">TAIWAN WEATHER FORECAST</h1>
+                <p class="subtitle">中央氣象署 CWA API × 氣溫趨勢 × 降雨機率雙維度空間儀表板</p>
+            </div>
+
+            <!-- 控制列 (縣市選擇、時段切換、刷新按鈕) -->
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label for="county-select">📍 預報縣市：</label>
+                    <select id="county-select" class="cyber-select">
+                        <option value="ALL">全台灣總覽</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="time-selector-container">
+                    <label>⏰ 預報時段：</label>
+                    <div id="time-pills" class="pill-group">
+                        <span class="loading-text">載入時段中...</span>
+                    </div>
+                </div>
+
+                <div class="control-actions">
+                    <button id="refresh-btn" class="cyber-btn primary-glow">
+                        <span class="btn-icon">⚡</span>
+                        <span>即時同步氣象數據</span>
+                    </button>
+                    <div id="api-status-badge" class="status-badge connecting">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">連線中...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 4 大核心氣象 KPI 指標卡片 -->
+        <section class="kpi-grid" id="kpi-section">
+            <div class="kpi-card" id="kpi-hottest">
+                <div class="kpi-icon hot-glow">🔥</div>
+                <div class="kpi-content">
+                    <span class="kpi-label">全台最高氣溫</span>
+                    <div class="kpi-value" id="val-hottest">-- °C</div>
+                    <span class="kpi-sub" id="sub-hottest">計算中...</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpi-coolest">
+                <div class="kpi-icon cool-glow">❄️</div>
+                <div class="kpi-content">
+                    <span class="kpi-label">全台最低氣溫</span>
+                    <div class="kpi-value" id="val-coolest">-- °C</div>
+                    <span class="kpi-sub" id="sub-coolest">計算中...</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpi-rain">
+                <div class="kpi-icon rain-glow">💧</div>
+                <div class="kpi-content">
+                    <span class="kpi-label">最高降雨機率</span>
+                    <div class="kpi-value" id="val-rain">-- %</div>
+                    <span class="kpi-sub" id="sub-rain">計算中...</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpi-avg">
+                <div class="kpi-icon temp-glow">🌡️</div>
+                <div class="kpi-content">
+                    <span class="kpi-label">全台平均氣溫</span>
+                    <div class="kpi-value" id="val-avg">-- °C</div>
+                    <span class="kpi-sub" id="sub-avg">計算中...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主功能頁籤 (Tabs) -->
+        <nav class="cyber-tabs" role="tablist">
+            <button class="tab-btn active" id="tab-btn-charts" role="tab" data-tab="tab-charts">
+                <span class="tab-icon">📈</span> 氣溫與降雨機率分析
+            </button>
+            <button class="tab-btn" id="tab-btn-map" role="tab" data-tab="tab-map">
+                <span class="tab-icon">🗺️</span> 台灣空間地圖視覺化 (雙模式)
+            </button>
+            <button class="tab-btn" id="tab-btn-table" role="tab" data-tab="tab-table">
+                <span class="tab-icon">🗄️</span> 即時預報資料庫檢視
+            </button>
+        </nav>
+
+        <!-- 分頁一：圖表分析 (Charts) -->
+        <main class="tab-content active" id="tab-charts">
+            <!-- 全台總覽視圖：雙排行切換 -->
+            <div id="overview-chart-container" class="chart-box">
+                <div class="box-header">
+                    <h2 class="box-title" id="overview-title">📊 全台灣 22 縣市指標排行</h2>
+                    <div class="toggle-pills" id="overview-subtabs">
+                        <button class="toggle-pill active" data-mode="temp">🔥 最高氣溫排行</button>
+                        <button class="toggle-pill" data-mode="rain">💧 降雨機率排行</button>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper" style="height: 580px;">
+                    <canvas id="overviewChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 單一縣市視圖：雙軸綜合趨勢圖 + 時段卡片 -->
+            <div id="single-county-container" class="single-view" style="display: none;">
+                <div class="chart-box">
+                    <div class="box-header">
+                        <h2 class="box-title" id="single-chart-title">📍 【臺北市】雙軸綜合趨勢：氣溫起伏與降雨機率</h2>
+                        <span class="tag-badge">未來 36 小時預報</span>
+                    </div>
+                    <div class="chart-canvas-wrapper" style="height: 420px;">
+                        <canvas id="singleCountyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 各時段預報卡片展示區 -->
+                <div class="period-cards-section">
+                    <h3 class="section-title">🕒 未來各時段詳細天氣預報</h3>
+                    <div class="period-cards-grid" id="period-cards-grid">
+                        <!-- JS 動態生成 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 分頁二：台灣互動地圖 (Map) -->
+        <section class="tab-content" id="tab-map">
+            <div class="map-wrapper">
+                <div class="map-controls-bar">
+                    <div class="layer-switch">
+                        <span class="switch-label">切換地圖指標圖層：</span>
+                        <div class="pill-group" id="map-mode-pills">
+                            <button class="toggle-pill active" data-map-mode="temperature">🌡️ 氣溫熱度分布</button>
+                            <button class="toggle-pill" data-map-mode="rainfall">💧 降雨機率分布</button>
+                        </div>
+                    </div>
+
+                    <!-- 動態圖例 -->
+                    <div class="dynamic-legend" id="map-legend">
+                        <!-- JS 動態切換圖例內容 -->
+                    </div>
+                </div>
+
+                <!-- Leaflet 地圖容器 -->
+                <div id="taiwan-map" class="map-container"></div>
+            </div>
+        </section>
+
+        <!-- 分頁三：資料庫檢視 (Table) -->
+        <section class="tab-content" id="tab-table">
+            <div class="table-box">
+                <div class="table-toolbar">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="table-search" placeholder="搜尋縣市名稱或天氣現象 (例如: 臺北、雨)..." class="cyber-input">
+                    </div>
+                    <button id="download-csv-btn" class="cyber-btn secondary-btn">
+                        <span>📥 匯出完整預報資料 (CSV)</span>
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="cyber-table" id="forecast-table">
+                        <thead>
+                            <tr>
+                                <th>縣市名稱</th>
+                                <th>預報時段</th>
+                                <th>天氣現象</th>
+                                <th>最低溫</th>
+                                <th>最高溫</th>
+                                <th>平均溫</th>
+                                <th>降雨機率</th>
+                                <th>舒適度指標</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- JS 動態填充 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SQL 語法預覽 -->
+                <div class="sql-preview-card">
+                    <h4 class="sql-title">🔍 後端 SQLite 查詢範例語法：</h4>
+                    <pre><code class="sql-code">-- 讀取全台最新氣溫與降雨預報 (依時段與縣市排序)
+SELECT regionName, startTime, endTime, weather, minT, maxT, avgT, pop, comfort
+FROM TemperatureForecasts
+ORDER BY startTime ASC, regionName ASC;
+
+-- 寫入與防重複更新 (Upsert 冪等性)
+INSERT OR REPLACE INTO TemperatureForecasts 
+(regionName, startTime, endTime, weather, minT, maxT, avgT, pop, comfort, updatedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 頁尾致謝 -->
+        <footer class="app-footer">
+            <p class="quote">「技術可以解決問題，但更重要的是用技術創造更好的未來！」</p>
+            <p class="credits">AI 創新微課程 - Taiwan Weather Forecast | 指導講師：煥哥 | Vercel Serverless Edition</p>
+        </footer>
+    </div>
+
+    <!-- Chart.js 核心庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet.js 互動地圖庫 -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- 前端互動主程式 -->
+    <script src="app.js"></script>
+</body>
+</html>
